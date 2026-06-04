@@ -1190,8 +1190,8 @@ PhysAddr = (PFN << SHIFT) | offset
 
 - 캐시 히트와 미스의 횟수를 안다면 프로그램의 `평균 메모리 접근 시간(average memory access time, AMAT)`을 계산할 수 있다.
 
-    $$ AMAT = (P_{Hit} \cdot
-     T_{M}) + (P_{Miss} \cdot T_{D}) $$
+    $$AMAT = (P_{Hit} \cdot
+     T_{M}) + (P_{Miss} \cdot T_{D})$$
 
     - $T_{M}$ = 물리 메모리 접근 비용
 
