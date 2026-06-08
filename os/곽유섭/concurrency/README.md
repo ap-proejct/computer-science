@@ -830,7 +830,7 @@ int Queue_Dequeue(queue_t *q, int *value) {
     node_t *newHead = tmp−>next;
     if (newHead == NULL) {
         pthread_mutex_unlock(&q−>headLock);
-        return −1; // ⒱a እᨕ ᯩᮭ
+        return −1; // 큐가 비어있음
     }
     *value = newHead−>value;
     q−>head = newHead;
