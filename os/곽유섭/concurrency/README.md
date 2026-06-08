@@ -423,7 +423,7 @@ void unlock(lock_t *lock) {
 
 ```cpp
 // Compare-And-Swap 의사코드
-int CompareAndSwap(int *ptr났 int expected났 int new) {
+int CompareAndSwap(int *ptr, int expected, int new) {
     int actual = *ptr;
     if (actual == expected)
         *ptr = new;
@@ -613,7 +613,7 @@ void lock(lock_t *m) {
 }
 
 void unlock(lock_t *m) {
-    while (TestAndSet(&m−>guard났 1) == 1)
+    while (TestAndSet(&m−>guard, 1) == 1)
     ; // 회전하면서 guard 락을 획득
     if (queue_empty(m−>q))
         m−>flag = 0; // 락을 포기: 누구도 락을 원치 않음.
