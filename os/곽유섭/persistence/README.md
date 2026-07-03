@@ -2352,5 +2352,230 @@ inum | reclen | strlen | name
 
         - 다시 읽기 수행 시점을 적절히 조절하여 영향을 줄일 수 있음.
 
-        
-        
+## 50. 분산 시스템
+
+> **핵심 질문**  
+> 구성 요소가 실패하더라도 동작하는 시스템을 어떻게 만들까?
+
+- **분산 시스템의 핵심 사안**
+
+    - 실패와 고장의 극복
+
+    - 시스템 성능
+
+    - 보안
+
+### 50-1. 통신의 기본
+
+- **네트워킹의 핵심 가정** : 통신은 신뢰할 수 없다.
+
+    - **패킷 손실의 이유**
+
+        1. 전송 중 전기적 또는 그와 유사한 문제로 비트가 반전될 경우
+
+        2. 네트워크의 링크나 패킷 라우터와 같은 시스템의 구성 요소 또는 원격 호스트 등의 고장났을 경우
+
+        3. 네트워크 스위치, 라우터 또는 연결의 종단점에서 버퍼링을 충분히 할 수 없는 경우
+
+            - 한꺼번에 많은 패킷들이 도착해 라우터의 메모리가 다 수용할 수 없는 경우, 라우터는 해당 패킷을 드랍한다.
+
+### 50-2. 신뢰할 수 없는 통신 계층
+
+- **가장 간단한 대처 방법** : 아무런 조치를 취하지 않는 것.
+
+    - 어떤 응용 프로그램들은 패킷 손실 시 대응 방법을 가지고 있기 때문에 메시지 계층과 직접 통신하는 것이 이로울 때도 있다.
+
+- **좋은 예시**
+
+    - `UDP/IP 네트워크 스택`
+
+        - 소켓 API를 이용하여 통신 지점을 생성한다.
+
+        - 다른 편 프로세스들은 **UDP 데이터그램** 을 원래 프로세스로 전송한다.
+
+            - **UDP 데이터그램** : 최대 크기가 정해져 있는 고정 크기의 메시지
+
+        - 패킷을 잃어버리는 경우들이 있다.(통신을 보장하지 않는다는 의미)
+
+        - 모든 실패에 대해서 대비를 하지 않는 것은 아니다.
+
+            - 체크섬을 포함하고 있어 일부 패킷 손상을 검출할 수 있다.
+
+
+```cpp
+// UDP / IP 클라이언트/서버 코드
+
+// 클라이언트 코드
+int main(int argc, char *argv[]) {
+    int sd = UDP_Open(20000);
+    struct sockaddr_in addr, addr2;
+    int rc = UDP_FillSockAddr(&addr, "machine.cs.wisc.edu", 10000);
+    char message[BUFFER_SIZE];
+    sprintf(message, "hello world");
+    rc = UDP_Write(sd, &addr, message, BUFFER_SIZE);
+    if (rc > 0) {
+        int rc = UDP_Read(sd, &addr2, buffer, BUFFER_SIZE);
+    }
+    return 0;
+}
+
+// 서버 코드
+int main(int argc, char *argv[]) {
+    int sd = UDP_Open(10000);
+    assert(sd > −1);
+    while (1) {
+        struct sockaddr_in s;
+        char buffer[BUFFER_SIZE];
+        int rc = UDP_Read(sd, &s, buffer, BUFFER_SIZE);
+        if (rc > 0) {
+            char reply[BUFFER_SIZE];
+            sprintf(reply, "reply ");
+            rc = UDP_Write(sd, &s, reply, BUFFER_SIZE);
+        }
+    }
+    return 0;
+}
+```
+
+```cpp
+// 간단한 UDP 라이브러리
+
+int UDP_Open(int port) {
+    int sd;
+    if ((sd = socket(AF_INET, SOCK_DGRAM, 0)) == -1) { return -1; }
+    struct sockaddr_in myaddr;
+    bzero(&myaddr, sizeof(myaddr));
+    myaddr.sin_family = AF_INET;
+    myaddr.sin_port = htons(port);
+    myaddr.sin_addr.s_addr = INADDR_ANY;
+    if (bind(sd, (struct sockaddr *) &myaddr, sizeof(myaddr)) == -1) {
+        close(sd);
+        return -1;
+    }
+    return sd;
+}
+
+int UDP_FillSockAddr(struct sockaddr_in *addr, char *hostName, int port) {
+    bzero(addr, sizeof(struct sockaddr_in));
+    addr->sin_family = AF_INET; //  호스트 바이트 오더
+    addr->sin_port = htons(port); // short, 네트워크 바이트 오더
+    struct in_addr *inAddr;
+    struct hostent *hostEntry;
+    if ((hostEntry = gethostbyname(hostName)) == NULL) { return −1; }
+        inAddr = (struct in_addr *) hostEntry->h_addr;
+        addr->sin_addr = *inAddr;
+    return 0;
+}
+
+int UDP_Write(int sd, struct sockaddr_in *addr, char *buffer, int n) {
+    int addrLen = sizeof(struct sockaddr_in);
+    return sendto(sd, buffer, n, 0, (struct sockaddr *) addr, addrLen);
+}
+
+int UDP_Read(int sd, struct sockaddr_in *addr, char *buffer, int n) {
+    int len = sizeof(struct sockaddr_in);
+    return recvfrom(sd, buffer, n, 0, (struct sockaddr *) addr, 
+                    (socklen_t *) &len);
+    return rc;
+}
+```
+
+### 50-3. 신뢰할 수 있는 통신 계층
+
+- `TCP/IP`
+
+    - 패킷 손실을 대응하기 위한 기술
+
+        - `확인(acknowledgement, ack)`
+
+            - 발신자는 메시지를 수신자에게 보내고, 수신자는 받았다는 것을 알리기 위해 짧은 메시지를 다시 보낸다.
+
+            <img src="./images/ackExample.png" width="500" style="display: block; margin: 0 auto;" >
+            <br>
+
+        - `타임아웃(timeout)./ 재시도`
+
+            - 발신자가 ack를 받지 못했을 경우를 대비하는 기술
+
+            - **스택 흐름**
+
+                - 발신자가 메시지를 보낼 때 발신자는 타이머를 설정하여 일정 시간이 흐른 후에는 종료되도록 한다.
+
+                - 만약 시간 안에 ack를 받지 못한다면, 발신자는 메시지를 잃어버렸다고 판단, 똑같은 메시지를 재전송한다.
+
+            <img src="./images/timeoutExample.png" width="500" style="display: block; margin: 0 auto;" >
+            <br>
+
+            - **문제점**
+
+                - 발신자 입장에선 재전송하면 그만이지만 수신자 입장에선 같은 메시지를 2번 받는 상황이 올 수 있다.
+
+                - 신뢰성 있는 메시지 계층을 목표로 한다면 수신 측도 각 메시지를 한 번만 받는다는 보장이 필요하다.
+
+        - `순서 카운터(sequence counter)`
+
+            - 수신자는 메시지를 받을 때마다 순서 카운터를 확인한다.
+
+            - 순서 카운터가 예상했던 값보다 작거나 같다면 이미 처리되었던 메시지로 간주하고 ack만 전송하고 응용 프로그램에 메시지를 전송하지는 않는다.
+
+### 50-4. 통신 추상화
+
+- 분산 시스템을 구현하는 데 필요한 통신 개념은 무엇일까?
+
+    - `분산 공유 메모리(distributed shared memory, DSM)`
+
+        - 하나의 프로세스가 서로 다른 기계들 위에서 커다란 가상 주소 공간을 공유할 수 있도록 한다.
+
+        - 쓰레드들이 하나의 기계의 프로세서들에서 실행되는 것이 아닌 다른 기계에서 실행된다.
+
+        - 대부분의 DSM 시스템은 가상 메모리 시스템 기반으로 동작한다.
+
+        - **페이지가 접근되었을 2가지 경우**
+
+            - 페이지가 이미 기계 내에 있어서 빠르게 데이터를 가져올 수 있는 경우
+
+            - 페이지가 현재 다른 기계에 있는 경우
+
+                - 페이지 폴트가 발생
+
+                - 핸들러는 다른 기계에게 메시지를 보내 페이지를 달라고 요청하고, 그 결과를 프로세스의 페이지 테이블에 삽입한 후 실행을 계속한다.
+
+        - **DSM의 문제점**
+
+            - 실패를 처리하는 방법
+
+                - 고장이 났다고 가정했을 때 분산 연산의 자료 구조가 전체 주소 공간에 퍼져 있다면, 자료 구조의 일부가 사용불가가 되면서 이를 해결하기가 쉽지 않다.
+
+            - 성능
+
+                - 메모리에서 접근하는 건 빠르지만, 페이지 폴트가 발생해 원격에서 가져오면 상당히 느리다.
+
+        - 이와 같은 문제점들 때문에 현재는 DSM을 사용하여 분산 시스템을 만들지 않는다.
+
+### 50-5. Remote Procedure Call (RPC)
+
+- **RPC의 목표**
+
+    - 원격 기계에서의 코드 실행을 로컬 내의 함수를 부르는 것처럼 복잡하지 않게 만드는 것.
+
+    - 클라이언트 : 프로시저를 호출하고 잠시 후 결과를 리턴받는다.
+
+    - 서버 : Export할 루틴을 정의한다.
+
+    - **RPC 시스템의 담당**
+
+        - `스텁 생성기 (stub generator) / 프로토콜 컴파일러 (protocol compiler)`
+
+            - 역할 : 함수의 인자들을 묶는 불편함을 없애고 자동적으로 메시지를 만드는 것
+
+            - **장점**
+
+                1. 수작업으로 코드를 작성할 경우 생기는 작은 실수를 방지
+
+                2. 그런 코드를 최적화할 수도 있기 때문에 성능을 개선할 수 있다.
+
+        - `런타임 라이브러리 (run-time library)`
+
+    
+
+    
