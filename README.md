@@ -5,7 +5,7 @@
 CS 기본기를 주제별로 차근차근 공부하고, 각자 이해한 내용을 기록하는 스터디 저장소입니다.
 
 <strong>Current Track</strong>  
-OS / OSTEP 한글판
+Network / 컴퓨터 네트워킹: 하향식 접근
 
 </div>
 
@@ -15,7 +15,7 @@ OS / OSTEP 한글판
 
 이 저장소는 운영체제, 네트워크, 컴퓨터 구조, 자료구조, 알고리즘, 데이터베이스처럼 CS의 핵심 주제를 하나씩 공부하기 위한 공간입니다.
 
-첫 번째 주제는 **운영체제**이며, OS는 현재 **OSTEP 한글판**만 기준으로 정리합니다. 다른 OS 교재가 필요해지면 그때 구조를 확장합니다.
+운영체제(**OSTEP 한글판**) 정리를 마쳤고, 현재는 두 번째 주제인 **네트워크**를 **컴퓨터 네트워킹: 하향식 접근(Kurose & Ross)** 기준으로 공부하고 있습니다. 다른 교재가 필요해지면 그때 구조를 확장합니다.
 
 ## Members
 
@@ -28,8 +28,8 @@ OS / OSTEP 한글판
 
 | 순서 | 주제 | 디렉토리 | 상태 |
 |---:|---|---|---|
-| 1 | 운영체제 | [os](./os/README.md) | 진행 중 |
-| 2 | 네트워크 | [network](./network/README.md) | 예정 |
+| 1 | 운영체제 | [os](./os/README.md) | 완료 |
+| 2 | 네트워크 | [network](./network/README.md) | 진행 중 |
 | 3 | 컴퓨터 구조 | [computer-architecture](./computer-architecture/README.md) | 예정 |
 | 4 | 자료구조 | [data-structure](./data-structure/README.md) | 예정 |
 | 5 | 알고리즘 | [algorithm](./algorithm/README.md) | 예정 |
@@ -39,11 +39,11 @@ OS / OSTEP 한글판
 
 | 항목 | 내용 |
 |---|---|
-| 주제 | 운영체제 |
-| 교재 | OSTEP 한글판 |
-| 기준 목차 | [Operating Systems: Three Easy Pieces](https://pages.cs.wisc.edu/~remzi/OSTEP/) |
-| 정리 위치 | [os](./os/README.md) |
-| 챕터 범위 | ch01 ~ ch57 |
+| 주제 | 네트워크 |
+| 교재 | 컴퓨터 네트워킹: 하향식 접근 (Kurose & Ross) |
+| 기준 목차 | [Computer Networking: A Top-Down Approach](https://gaia.cs.umass.edu/kurose_ross/index.php) |
+| 정리 위치 | [network](./network/README.md) |
+| 챕터 범위 | ch01 ~ ch08 |
 
 ## Repository Structure
 
