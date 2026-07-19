@@ -6,8 +6,8 @@
 
 | Chapter | Title | Link | Status |
 |---|---|---|---|
-| ch01 | 컴퓨터 네트워크와 인터넷 | [README](./ch01/README.md) | Not started |
-| ch02 | 애플리케이션 계층 | [README](./ch02/README.md) | Not started |
+| ch01 | 컴퓨터 네트워크와 인터넷 | [README](ch01/1~4장.md) | Not started |
+| ch02 | 애플리케이션 계층 | [README](ch02/1~3장.md) | Not started |
 | ch03 | 트랜스포트 계층 | [README](./ch03/README.md) | Not started |
 | ch04 | 네트워크 계층: 데이터 평면 | [README](./ch04/README.md) | Not started |
 | ch05 | 네트워크 계층: 제어 평면 | [README](./ch05/README.md) | Not started |
