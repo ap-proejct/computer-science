@@ -868,3 +868,284 @@ Set-cookie : 1678 // 쿠키 식별번호
 - 압축을 통해 동일한 비디오를 여러 버전의 품질로 만들 수 있다.
 
 ### 2.6.2 HTTP 스트리밍 및 DASH
+
+- HTTP 스트리밍에서 비디오는 HTTP 서버 내의 특정 URL을 갖는 일반적인 파일로 저장된다.
+
+- **HTTP 스트리밍 동작 흐름**
+
+    1. 사용자가 시청을 원하면 서버에게 TCP 연결을 설립하고 HTTP GET 요청을 발생시킨다.
+
+    2. 서버가 프로토콜 및 트래픽 조건이 허용하는 대로 HTTP 응답 메시지 내에서 비디오 파일을 전송한다.
+
+    3. 클라이언트에서는 애플리케이션 버퍼에 전송된 바이트가 저장된다.
+
+    4. 버퍼가 임곗값을 초과하면 클라이언트 애플리케이션이 재생을 시작한다.
+
+- **DASH(Dynamic Adaptive Streaming over HTTP)**
+
+    - HTTP 스트리밍의 문제를 해결하기 위해 사용
+
+        - **문제점** : 가용 대역폭의 차이가 있음에도 똑같이 인코딩된 비디오를 전송받는다.
+
+    - 비디오가 여러 버전으로 인코딩되며, 각 버전마다 비트율과 품질 수준이 다르다.
+
+    - 클라이언트의 가용 대역폭이 충분할 때는 높은 비트율의 비디오 버전을 요청하며, 적을 때는 반대로 신청한다.
+
+    - 클라이언트에게 세션 유지 중 시간에 따라 변하는 종단 간 가용 대역폭에 적응할 수 있도록 허용한다.
+
+    - 각 비디오 버전마다 서로 다른 URL을 가지고 저장된다.
+
+### 2.6.3 콘텐츠 분배 네트워크(CDN)
+
+- **데이터 센터를 구축하고 서버로 쓰는 방법의 문제점**
+
+    1. 클라이언트가 데이터 센터로부터 먼 경우, 종단 간 처리율이 낮아지고 화면 정지 현상을 겪게 된다.
+
+    2. 인기 있는 비디오는 같은 통신 링크를 통해 여러 번 반복저긍로 전송될 것이다.
+
+        - 이는 대역폭 낭비는 물론 중복 비용을 지불하는 결과를 초래한다.
+
+    3. 데이터 센터에서 한 번의 장애로 인해 전체 서비스가 중단될 수 있는 위험이 있다.
+
+- 이러한 문제를 해결하기 위해 `CDN`를 이용한다.
+
+    - CDN은 다수의 지점에 분산된 서버들을 운영
+
+    - 비디오 및 다른 형태의 웹 콘텐츠 데이터의 복사본을 저장한다.
+
+    - 사용자는 최선의 서비스와 사용자 경험을 제공할 수 있는 지점의 CDN 서버로 연결된다.
+
+- **CDN의 철학(2가지 중 하나를 채용한다.)**
+
+    - `Enter Deep`
+
+        - 서버 클러스터를 세계 곳곳의 접속 네트워크에 구축함으로써 ISP의 접속 네트워크로 깊숙이 들어가는 개념
+
+        - 목적 : 서버를 최대한 사용자 가까이에 위치시켜 사용자와 CDN 서버 사이의 링크 및 라우터 수를 줄이고, 사용자가 경험하는 지연 시간 및 처리율을 개선하는 것 
+
+    - `Bring Home`
+
+        - 좀 더 적은 수의 핵심 지점에 큰 규모의 서버 클러스터를 구축하여 ISP를 Home으로 가져오는 개념
+
+        - 접속 ISP 대신 CDN들의 클러스터를 IXP에 배치한다.
+
+        - 클러스터 유지 및 관리 비용이 줄어드는 대신에 지연 시간과 처리율은 상대적으로 나빠진다.
+
+- CDN은 클러스터에 대해 푸시(push) 방식이 아닌 풀(pull) 방식을 사용한다. 
+
+
+- **CDN 동작**
+
+    - 사용자 호스트의 웹 브라우저가 URL을 지정함으로써 특정 비디오의 재생을 요청
+
+    1. CDN은 그 요청을 가로채 그 시점에서 클라이언트에게 가장 적당한 CDN 클러스터를 선택
+
+        - 대부분의 CDN이 사용자의 요청을 가로채고 다른 곳에 연결하는데 DNS를 활용한다.
+
+    2. 클라이언트의 요청을 해당 클러스터의 서버로 연결
+
+    <img src="./images/cdnExample.png" width="500" style="display: block; margin: 0 auto;">
+    <br>
+
+    1. 사용자가 웹페이지를 방문
+
+    2. 사용자가 영상 링크를 클릭하면, 사용자 호스트는 DNS 질의를 전송
+
+    3. 해당 질의를 NetCinema의 책임 DNS 서버롤 전달, 해당 DNS 질의를 KingCDN으로 연결하기 위해 IP 주소 대신 KingCDN의 호스트 이름을 리턴
+
+    4. DNS 질의는 KingCDN의 사설 DNS 구조로 진입. KingCDN의 DNS에 의해 IP 주소로 변환되어 리턴
+
+    5. LDNS는 콘텐츠를 제공할 CDN 서버의 IP주소를 사용자 호스트에게 리턴
+
+    6. 클라이언트는 KingCDN의 IP 주소를 얻고 나면, 해당 IP 주소로 직접 TCP 연결 후 HTTP GET 요청을 전송
+
+- **클러스터 선택 정책**
+
+    - 클라이언트를 동적으로 어떤 서버 클러스터 또는 CDN 데이터 센터로 연결하는 방식
+
+    - 일반적인 기법 : 지리적으로 가장 가까운 클러스터를 할당하는 기법
+
+        - 대부분의 클라이언트를 대상으로 상당히 잘 동작한다.
+
+        - 지리적으로 가장 가까운 클러스터가 네트워크 경로의 길이 홉(Hop)의 수에 따라 가장 가까운 클러스터가 아닐 수 있기 때문에 최선은 아니다.
+
+        - 일부 사용자는 상당히 멀리 있는 DNS 서버를 LDNS로 사용하도록 설정할 수 있다.
+
+        - 최선의 클러스터를 선택하기 위해 CDN은 주기적으로 클러스터와 클라이언트 간의 지연 및 손실 성능에 대한 `실시간 측정`을 수행하기도 한다.
+    
+### 2.6.4 사례연구:넷플릭스, 유튜브
+
+- `넷플릭스` : 아마존 서버 안에 있는 AWS에서 모든 것이 실행된다.
+
+    - **아마존 클라우드가 처리하는 기능**
+
+        - `콘텐츠 수집` : 아마존 클라우드 시스템의 호스트에 영화 마스터 버전을 업로드
+
+        - `콘텐츠 처리` 
+        
+            - 다양한 기기에서 볼 수 있도록 여러 가지 형식의 비디오를 생성
+            
+            - DASH를 이용한 HTTP 적응적 스트리밍 서비스를 위해 다양한 비트율의 버전 생성
+
+        - `CDN으로의 버전 업로드` : 영화의 다양한 버전이 생성되면 호스트는 CDN으로 업로드 가능
+
+    <img src="./images/netflixExample.png" width="500" style="display: block; margin: 0 auto;">
+    <br>
+
+    - 2007년 이후 : 자사의 모든 비디오를 스트리밍할 수 있는 자체 프라이빗 클라우드 구축
+
+        - IXP 및 거주용 ISP 자체에서 서버 랙을 설치
+
+        - 각각의 랙 서버에는 10 Gbps 이더넷 포트와 100테라바이트 이상의 스토리지
+
+        - 풀 캐싱을 사용하여 IXP 및 ISP의 CDN 서버를 채운다.
+
+- `유튜브` :  구글에서 운영하는 비디오 스트리밍 서비스
+
+    - 자체 비공개 CDN을 사용하여 영상을 배포하고 수백 가지의 IXP와 ISP 위치에 서버 클러스터를 설치했다.
+
+    - **구글의 클러스터 선택 정책** : 클라이언트와 클러스터 간의 RTT가 가장 적은 곳을 연결하는 방식
+
+    - 유튜브는 DASH 같은 적응적 스트리밍 대신 사용자가 스스로 버전을 선택하게 했다.
+
+    - HTTP byte-range 헤더를 이용해 목표한 분량의 선인출 데이터 이후 추가로 전송되는 데이터 흐름을 제한한다.
+
+## 2.7 소켓 프로그래밍: 네트워크 애플리케이션 생성
+
+- 두 프로그램을 수행하면 클라이언트와 서버 프로세스가 생성되고, 두 프로세스가 소켓으로부터 읽고(read), 소켓에 쓰기(write)를 통해 서로 통신한다.
+
+- **클라이언트-서버 애플리케이션 형태**
+
+    1. RFC에 정의된 표준 프로토콜을 구현하는 클라이언트-서버 애플리케이션
+
+        - `개방형`이라고 불리며, 그 동작을 규정하는 규칙들이 모두에게 알려져 있다.
+
+    2. 개인의 독점적인 네트워크 애플리케이션
+
+        - 클라이언트와 서버 프로그램은 RFC 또는 다른 곳에 공식적으로 출판되지 않은 애플리케이션 계층 프로토콜을 채택
+
+        - 공개된 프로토콜로 구현되지 않기 때문에, 다른 독립 개발자는 이 애플리케이션과 상호작용하는 코드를 개발할 수 없다.
+
+### 2.7.1 UDP를 이용한 소켓 프로그래밍
+
+- 애플리케이션 개발자는 소켓의 애플리케이션 계층에 대한 제어권을 갖지만 트랜스포트 계층 쪽에 대한 제어권은 거의 없다.
+
+- **UDP 소켓을 이용하는 두 통신 프로세스들 간의 상호작용**
+
+    - 송신 프로세스가 데이터의 패킷을 소켓 문밖으로 밀어내기 전에, UDP를 사용할 때 먼저 패킷에 목적지 주소를 붙여넣어야 한다.
+
+    - 패킷이 송신자의 소켓을 통과한 후 인터넷은 이 목적지 주소를 이용하여 그 패킷을 수신 프로세스에 있는 소켓으로 라우트한다.
+
+    - 패킷이 수신 소켓에 도착하면 수신 프로세스는 소켓을 통해 그 패킷을 추출하고 다음에 패킷의 콘텐츠를 조사하고 적절한 동작을 취한다.
+
+- **패킷에 붙여지는 목적지 주소**
+
+    - 목적지 호스트의 IP 주소가 목적지 주소의 일부가 된다.
+
+    - 소켓을 생성할 때 `포트 번호`라는 식별자가 소켓에 할당된다.
+    
+        - 호스트는 하나 이상의 소켓을 갖는 많은 네트워크 애플리케이션 프로세스를 수행하고 있을 수 있기 때문에 특정한 소켓을 식별할 필요가 있다.
+
+    - 출발지 주소를 패킷에 붙이는 것은 일반적으로 UDP 애플리케이션 코드가 하지 않는다.
+
+    <img src="./images/udpSocketApplicationExample.png" width="500" style="display: block; margin: 0 auto;" >
+    <br>
+
+- **UDPClient.py**
+
+    ```py
+    from socket import *    
+    serverName = 'hostname'
+    serverPort = 12000
+    clientSocket = socket(AF_INET, SOCK_DGRAM)
+    message = input('Input lowercase sentence:')
+    clientSocket.sendto(message.encode(),(serverName, serverPort))
+    modifiedMessage, serverAddress = clientSocket.recvfrom(2048)
+    print(modifiedMessage.decode())
+    clientSocket.close()
+    ```
+
+- **UDPServer.py**
+
+    ```py
+    from socket import *
+    serverPort = 12000
+    serverSocket = socket(AF_INET, SOCK_DGRAM)
+    serverSocket.bind(('',serverPort))
+    print("The server is ready to receive")
+    while True:
+        message, clientAddress = serverSocket.recvfrom(2048)
+        modifiedMessage = message.decode().upper()
+        serverSocket.sendto(modifiedMessage.encode(), clientAddress)
+    ```
+
+### 2.7.2 TCP 소켓 프로그래밍
+
+- TCP는 UDP와 달리 `연결지향 프로토콜`로, 서로에게 데이터를 보내기 전에 먼저 TCP 연결을 설정할 필요가 있다.
+
+- TCP 연결이 설정된 후, 한쪽에서 다른 쪽으로 데이터를 보내려면 소켓을 통해 데이터를 보내면 된다.
+
+- **TCP에서 클라이언트와 서버의 상호작용**
+
+    - 클라이언트와 서버는 서로 접속에 대해 먼저 시도하거나 준비하고 있다.
+
+    - **2가지 의미**
+
+        1. UDP와 마찬가지로 TCP 서버는 클라이언트가 접속을 시도하기 전에 프로세스를 먼저 수행하고 있어야 한다.
+
+        2. 서버는 클라이언트로부터 초기 접속을 처리하는 특별한 소켓을 가져야 한다.
+
+    - 서버 프로세스가 수행되면 클라이언트 프로세스는 서버로의 TCP 연결을 시도한다.
+
+    - 클라이언트는 소켓을 생성할 때, 서버에 있는 환영 소켓의 주소(서버의 IP 주소와 소켓의 포트번호)를 명시한다.
+
+    - 소켓을 생성한 후 클라이언트는 세 방향 핸드셰이크를 하고 서버와 TCP 연결을 설정한다.
+
+    - 트랜스포트 계층에서 일어나는 **세 방향 핸드셰이크는 클라이언트와 서버가 인식하지 못한다.**
+
+    - 서버가 노크를 들으면 새로운 소켓을 생성한다.
+
+        - 이때 환영 소켓과 통신 소켓은 엄연히 다른 것이니 혼동하지 말도록 주의하자.
+
+    <img src="./images/tcpSocketProcessExample.png" width="500" style="display: block; margin: 0 auto;">
+    <br>
+
+
+<img src="./images/tcpSocketApplicationExample.png" width="500" style="display: block; margin: 0 auto;">
+<br>
+
+- **TCPClient.py**
+
+    ```py
+    from socket import *
+    serverName = 'servername'
+    serverPort = 12000
+    clientSocket = socket(AF_INET, SOCK_STREAM)
+    clientSocket.connect((serverName, serverPort))
+    message = input('Input lowercase sentence:')
+    clientSocket.send(message.encode())
+    modifiedMessage = clientSocket.recv(1024)
+    print(modifiedMessage.decode())
+    clientSocket.close()
+    ```
+
+- **TCPServer.py**
+
+    ```py
+    from socket import *
+    serverPort = 12000
+    serverSocket = socket(AF_INET, SOCK_STREAM)
+    serverSocket.bind(('',serverPort))
+    serverSocket.listen(1)
+    print("The server is ready to receive")
+    while True:
+        connectionSocket, addr = serverSocket.accept()
+        sentence = connectionSocket.recv(1024).decode()
+        capitalizedSentence = sentence.upper()
+        connectionSocket.send(capitalizedSentence.encode())
+        connectionSocket.close()
+    ```
+
+
+
+    
